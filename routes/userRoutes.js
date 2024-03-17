@@ -5,6 +5,7 @@ const { User } = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const isAuthenticated = require("../middleware/isAuthenticated");
+const isAdmin = require("../middleware/isAdmin");
 
 /**
  * @swagger
@@ -19,22 +20,19 @@ const isAuthenticated = require("../middleware/isAuthenticated");
  *   post:
  *     summary: Create a new user
  *     tags: [Users]
- *     parameters:
- *       - in: body
- *         name: user
- *         required: true
- *         description: The user object to create
- *         schema:
- *           type: object
- *           properties:
- *             username:
- *               type: string
- *             email:
- *               type: string
- *             password:
- *               type: string
- *             role:
- *               type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
  *     responses:
  *       '201':
  *         description: Created
@@ -45,8 +43,8 @@ const isAuthenticated = require("../middleware/isAuthenticated");
 // Create a new user
 router.post("/", async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
-
+    const { username, email, password } = req.body;
+    console.log(password);
     // Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -54,7 +52,7 @@ router.post("/", async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role,
+      role: "User",
     });
 
     res.status(201).json(newUser);
@@ -80,7 +78,7 @@ router.post("/", async (req, res) => {
  */
 
 // Get all users
-router.get("/", isAuthenticated, async (req, res) => {
+router.get("/", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const users = await User.findAll();
     res.json(users);
@@ -118,6 +116,9 @@ router.get("/", isAuthenticated, async (req, res) => {
 router.get("/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
+    if(req.user.userId != id && req.user.role !== 'Admin'){
+      return res.status(403).json({ error: "Unauthorized: User is not an admin" });
+    }
     const user = await User.findByPk(id);
     if (user) {
       res.json(user);
@@ -145,21 +146,21 @@ router.get("/:id", isAuthenticated, async (req, res) => {
  *           type: integer
  *         required: true
  *         description: ID of the user to update
- *       - in: body
- *         name: user
- *         required: true
- *         description: The updated user object
- *         schema:
- *           type: object
- *           properties:
- *             username:
- *               type: string
- *             email:
- *               type: string
- *             password:
- *               type: string
- *             role:
- *               type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
  *     responses:
  *       '200':
  *         description: Success
@@ -173,6 +174,9 @@ router.get("/:id", isAuthenticated, async (req, res) => {
 router.put("/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
+    if(req.user.userId != id && req.user.role !== 'Admin'){
+      return res.status(403).json({ error: "Unauthorized: User is not an admin" });
+    }
     const { username, email, password, role } = req.body;
 
     const user = await User.findByPk(id);
@@ -227,6 +231,9 @@ router.put("/:id", isAuthenticated, async (req, res) => {
 router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
+    if(req.user.userId != id && req.user.role !== 'Admin'){
+      return res.status(403).json({ error: "Unauthorized: User is not an admin" });
+    }
     const user = await User.findByPk(id);
     if (user) {
       await user.destroy();

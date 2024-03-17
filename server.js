@@ -48,6 +48,12 @@ const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
+const carRoutes = require("./routes/carRoutes");
+app.use("/api/cars", carRoutes);
+const bookedCarRoutes = require("./routes/bookedCarRoutes");
+app.use("/api/booked-cars", bookedCarRoutes);
+const bookingRoutes = require("./routes/bookingRoutes");
+app.use("/api/bookings", bookingRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3001;
