@@ -5,9 +5,7 @@ const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJSDoc = require("swagger-jsdoc");
 const bodyParser = require("body-parser");
-const jwt = require("jsonwebtoken");
 const sequelize = require("./config/database"); // Import Sequelize instance
-const { User, Booking, Car, BookedCar } = require("./models"); // Import Sequelize models
 
 const app = express();
 
@@ -56,7 +54,7 @@ const bookingRoutes = require("./routes/bookingRoutes");
 app.use("/api/bookings", bookingRoutes);
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 sequelize
   .sync() // Synchronize models with the database
   .then(() => {

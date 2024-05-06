@@ -34,10 +34,7 @@ const { User } = require("../models");
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
+ *               type: string
  *       '401':
  *         description: Invalid email or password
  *       '500':
@@ -67,7 +64,7 @@ router.post("/login", async (req, res) => {
     );
 
     // Respond with token
-    res.json({ token });
+    res.send(token);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to authenticate" });

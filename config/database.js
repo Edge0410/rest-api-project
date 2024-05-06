@@ -1,13 +1,13 @@
 const { Sequelize } = require('sequelize');
 
-// Initialize Sequelize with your database connection details
+// Initialize Sequelize with database connection details using mysql dialect
 const sequelize = new Sequelize({
-  dialect: 'mysql', // or any other dialect
-  host: 'localhost', // your database host
-  port: 3306, // your database port
-  username: 'root', // your database username
-  password: '12345678', // your database password
-  database: 'rent_a_car', // your database name
+  dialect: 'mysql', 
+  host: 'localhost',
+  port: 3306, 
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD, 
+  database: 'rent_a_car',
 });
 
 // Test the database connection
@@ -20,6 +20,6 @@ async function testConnection() {
   }
 }
 
-testConnection(); // You can remove this line if you want to disable the connection test
+testConnection(); 
 
 module.exports = sequelize;

@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const isAuthenticated = (req, res, next) => {
+  // We extract the request header to get the token if exists
   const token = req.headers.authorization;
 
   if (!token) {
