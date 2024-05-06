@@ -9,6 +9,7 @@ const isAuthenticated = (req, res, next) => {
   }
 
   // Token format: "Bearer <token>"
+  // Swagger format: <token>
   const [, accessToken] = token.split(" ");
 
   jwt.verify(accessToken, process.env.JWT_SECRET, (err, decoded) => {

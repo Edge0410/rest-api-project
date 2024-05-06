@@ -256,20 +256,31 @@ catch(error){
 
 ### Operatii CRUD avansate
 
-Una dintre operatiile cele mai utile din flowul unui utilizator va fi ruta care intoarce toate masinile disponibile pentru un date interval - mai exact, avem nevoie de o ruta care sa ne afiseze toate masinile ce pot fi inchiriate de la momentul x de timp pana la momentul y. 
+Una dintre operatiile cele mai utile din flowul unui utilizator va fi ruta care creaza o rezervare. Pentru ca un user sa poata sa rezerve o masina avem nevoie sa ne asiguram ca masina poate fi rezervata - mai exact, trebuie sa ne asiguram ca masina pe care dorim sa o rezervam nu se afla in lista de masini rezervate in niciuna din zilele rezervarii
 
 ```JS
-router.get("/available", isValidDateFormat, async (req, res) => {
+router.post("/", isAuthenticated, isValidDateFormatBody, async (req, res) => {
   try {
-    const { checkin_date, checkout_date } = req.query;
+    const { user_id, cars, checkin_date, checkout_date } = req.body;
 
-    // Query for cars available for the specified date range
-    const availableCars = await Car.findAll({
-      include: [
-        {
-          model: BookedCar,
-          include: {
+    if(req.user.userId != user_id && req.user.role !== 'Admin'){
+      return res.status(403).json({ error: "Unauthorized: User is not an admin" });
+    }
+
+    // Step 1: Validate user ID
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Step 2: Check if each car is available for booking
+    const unavailableCars = [];
+    for (const carId of cars) {
+      const existingBooking = await BookedCar.findOne({
+        include: [
+          {
             model: Booking,
+            attributes: ["checkin_date", "checkout_date"],
             where: {
               [Op.or]: [
                 {
@@ -291,23 +302,45 @@ router.get("/available", isValidDateFormat, async (req, res) => {
               ],
             },
           },
-          required: false, // Use 'false' to perform LEFT JOIN
-        },
-      ],
-      where: {
-        "$BookedCars.booked_cars_id$": null, // Filter out cars with booked dates
-      },
+        ],
+        where: { car_id: carId },
+      });
+
+      if (existingBooking) {
+        unavailableCars.push(carId);
+      }
+    }
+
+    if (unavailableCars.length > 0) {
+      return res.status(400).json({
+        error: "Some cars are already booked for the specified date range",
+        unavailableCars,
+      });
+    }
+
+    // Step 3: Create the booking and associate the cars
+    const booking = await Booking.create({
+      user_id,
+      checkin_date,
+      checkout_date,
+      price: 150,
     });
 
-    res.json(availableCars);
+    await Promise.all(
+      cars.map((carId) =>
+        BookedCar.create({ booking_id: booking.booking_id, car_id: carId })
+      )
+    );
+
+    res.status(201).json(booking);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch available cars" });
+    res.status(500).json({ error: "Failed to create booking" });
   }
 });
 ```
 
-In primul rand, daca trecem de middleware-ul ce verifica formatul datelor, vom face un query ceva mai mare care va efectua un inner join intre tabelele **booking** si **booked_cars** pentru a obtine masinile care sunt inchiriate intr-un interval care "inteapa" intervalul de rezervare dorit de utilizator. In final, facem un left join intre tabela **cars** si inner joinul precedent pentru a obtine inregistrari de tipul (masina, rezervare). Daca avem masini care au campul **booked_cars_id** `null` atunci stim ca acea masina nu a fost rezervata intr-un interval care sa nu ii permita a fi rezervata de utilizatorul care a efectuat cautarea.
+In primul rand, daca trecem de middleware-ul ce verifica formatul datelor si cel de autentificare, vom face un query ceva mai mare care va efectua un inner join intre tabelele **booking** si **booked_cars** pentru a obtine masinile care sunt inchiriate intr-un interval care "inteapa" intervalul de rezervare dorit de utilizator. In final, facem un left join intre tabela **cars** si inner joinul precedent pentru a obtine inregistrari de tipul (masina, rezervare). Daca avem masini care au campul **booked_cars_id** `null` atunci stim ca acea masina nu a fost rezervata intr-un interval care sa nu ii permita a fi rezervata de utilizatorul care a efectuat cautarea. Practic, nu mai ramane decat sa ne asiguram ca fiecare masina din request nu se afla in lista cu masini indisponibile pe acea perioada si o putem adauga in tabela booked_cars in caz afirmativ.
 
 ## Potential User Flow
 
