@@ -256,7 +256,7 @@ catch(error){
 
 ### Operatii CRUD avansate
 
-Una dintre operatiile cele mai utile din flowul unui utilizator va fi ruta care creaza o rezervare. Pentru ca un user sa poata sa rezerve o masina avem nevoie sa ne asiguram ca masina poate fi rezervata - mai exact, trebuie sa ne asiguram ca masina pe care dorim sa o rezervam nu se afla in lista de masini rezervate in niciuna din zilele rezervarii
+Una dintre operatiile cele mai utile din flowul unui utilizator va fi ruta care creaza o rezervare. Pentru ca un user sa poata sa rezerve o masina avem nevoie sa ne asiguram ca masina poate fi rezervata - mai exact, trebuie sa ne asiguram ca masina pe care dorim sa o rezervam nu se afla in lista de masini rezervate in niciuna din zilele rezervarii.
 
 ```JS
 router.post("/", isAuthenticated, isValidDateFormatBody, async (req, res) => {
