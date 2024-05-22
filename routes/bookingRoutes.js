@@ -4,7 +4,6 @@ const { Booking, User, BookedCar } = require("../models");
 const isAuthenticated = require("../middleware/isAuthenticated");
 const isAdmin = require("../middleware/isAdmin");
 const isValidDateFormatBody = require("../middleware/isValidDateFormatBody");
-
 const { Op } = require("sequelize");
 
 /**

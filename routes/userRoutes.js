@@ -6,6 +6,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const isAuthenticated = require("../middleware/isAuthenticated");
 const isAdmin = require("../middleware/isAdmin");
+const isValidEmailAndPassword = require("../middleware/isValidEmailAndPassword");
+const { Op } = require("sequelize");
 
 /**
  * @swagger
@@ -41,10 +43,23 @@ const isAdmin = require("../middleware/isAdmin");
  */
 
 // Create a new user
-router.post("/", async (req, res) => {
+router.post("/", isValidEmailAndPassword, async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log(password);
+
+    // We have to make sure if there is not any other user with the same email
+    const existingUser = await User.findOne({
+      where: {
+          [Op.or]: [
+              { email: email }
+          ]
+      }
+  });
+
+  if (existingUser) {
+      return res.status(400).json({ error: 'Email already exists.' });
+  }
+
     // Hash the password before storing it in the database
     const hashedPassword = await bcrypt.hash(password, 10);
 
